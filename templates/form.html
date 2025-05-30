@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Krishnavesha Registration</title>
+  <link rel="stylesheet" href="/static/style.css"/>
+  <script>
+    let participantCount = 0;
+
+    function validateDOB(dob) {
+  const date = new Date(dob);
+  const min = new Date("2010-08-09");
+  const max = new Date("2025-06-01");
+  return date >= min && date <= max;
+}
+
+function calculateCategory(dob) {
+  const d = new Date(dob);
+  if (d >= new Date("2024-08-09")) return "A";
+  if (d >= new Date("2022-08-09")) return "B";
+  if (d >= new Date("2020-08-09")) return "C";
+  if (d >= new Date("2018-08-09")) return "D";
+  if (d >= new Date("2016-08-09")) return "E";
+  if (d >= new Date("2013-08-09")) return "F";
+  if (d >= new Date("2010-08-09")) return "G";
+  return "Invalid";
+}
+
+function addParticipant() {
+  participantCount++;
+  const container = document.getElementById("participants");
+  const div = document.createElement("div");
+  div.className = "participant";
+  div.innerHTML = `
+    <hr />
+    <label>Participant Name: <input name="participant_name_${participantCount}" required /></label><br>
+    <label>School/Institution: <input name="participant_school_${participantCount}" required /></label><br>
+    <label>Gender: 
+      <select name="participant_gender_${participantCount}">
+        <option>Male</option><option>Female</option><option>Other</option>
+      </select>
+    </label><br>
+    <label>Date of Birth: <input type="date" name="participant_dob_${participantCount}" onchange="handleDOB(this, ${participantCount})" required /></label><br>
+    <div id="category_${participantCount}">Category: </div>
+    <div id="options_${participantCount}"></div>
+    <button type="button" onclick="this.parentElement.remove(); participantCount--; checkSubmitButton();">Remove Participant</button>
+  `;
+  container.appendChild(div);
+  checkSubmitButton();
+}
+
+function handleDOB(input, id) {
+  const dob = input.value;
+  if (!validateDOB(dob)) {
+    alert("DOB must be between 9 Aug 2010 and 1 June 2025");
+    input.value = "";
+    return;
+  }
+  const cat = calculateCategory(dob);
+  document.getElementById(`category_${id}`).innerText = `Category: ${cat}`;
+  const opts = document.getElementById(`options_${id}`);
+  const dobDate = new Date(dob);
+  const showOptions = dobDate >= new Date("2010-08-09") && dobDate <= new Date("2016-08-10");
+  if (showOptions) {
+    opts.innerHTML = `
+      <label><input type="checkbox" name="costume_${id}" /> Costume</label>
+      <label><input type="checkbox" name="group_${id}" /> Group</label>
+    `;
+  } else {
+    opts.innerHTML = "";
+  }
+}
+
+function checkSubmitButton() {
+  const submitBtn = document.getElementById("submit_btn");
+  submitBtn.disabled = participantCount < 1;
+}
+
+function toggleMode(value) {
+  const individual = document.getElementById("individual_info");
+  const school = document.getElementById("school_info");
+
+  if (value === "individual") {
+    individual.style.display = "block";
+    school.style.display = "none";
+    // Enable required fields in individual section
+    individual.querySelectorAll("input").forEach(i => i.required = true);
+    school.querySelectorAll("input").forEach(i => i.required = false);
+  } else if (value === "school") {
+    individual.style.display = "none";
+    school.style.display = "block";
+    // Enable required fields in school section
+    individual.querySelectorAll("input").forEach(i => i.required = false);
+    school.querySelectorAll("input").forEach(i => i.required = true);
+  } else {
+    individual.style.display = "none";
+    school.style.display = "none";
+    individual.querySelectorAll("input").forEach(i => i.required = false);
+    school.querySelectorAll("input").forEach(i => i.required = false);
+  }
+}
+  </script>
+</head>
+<body>
+  <h1>Krishnavesha Registration</h1>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul style="color: green;">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form method="post">
+    <label>
+      Are you registering as an:
+      <select name="mode" id="mode" onchange="toggleMode(this.value)" required>
+        <option value="">-- Select --</option>
+        <option value="individual">Individual</option>
+        <option value="school">School/Association</option>
+      </select>
+    </label>
+
+    <div id="individual_info" style="display:none">
+  <h3>Parent Information</h3>
+  <label>Parent Name: <input name="parent_name" /></label><br>
+  <label>Parent's Mobile: <input type="tel" name="parent_mobile" pattern="[0-9]{10}" /></label><br>
+  <label>Email: <input type="email" name="parent_email" /></label><br>
+  <label>Consent to contact? <input type="checkbox" name="parent_consent" /></label>
+</div>
+
+<div id="school_info" style="display:none">
+  <h3>School/Association Info</h3>
+  <label>School Name: <input name="school_name" /></label><br>
+  <label>Coordinator's Mobile: <input type="tel" name="coordinator_mobile" pattern="[0-9]{10}" /></label><br>
+  <label>Email: <input type="email" name="coordinator_email" /></label><br>
+  <label>Consent to contact? <input type="checkbox" name="school_consent" /></label>
+</div>
+
+<hr />
+<h3>Participants</h3>
+<div id="participants"></div>
+<button type="button" onclick="addParticipant()">Add Participant</button>
+<br><br>
+<button type="submit" id="submit_btn" disabled>Submit</button>
+
+  </form>
+</body>
+</html>
