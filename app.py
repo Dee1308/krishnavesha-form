@@ -1,18 +1,21 @@
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import os
+import json
+from io import StringIO
 import datetime
 
 app = Flask(__name__)
-app.secret_key = 'your_very_secret_key_here'  # You can set this to any random string
+app.secret_key = 'your_very_secret_key_here'  # Change to a random string in production
 
-# Google Sheets setup
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets",
-         "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("gspread_credentials.json", scope)
-gc = gspread.authorize(creds)
+# Load Google Sheets credentials from environment variable
+creds_json = os.environ.get("GOOGLE_CREDS_JSON")
 
+if creds_json is None:
+    raise Exception("GOOGLE_CREDS_JSON environment variable not set")
+
+gc = gspread.service_account_from_dict(json.loads(creds_json))
 sheet = gc.open("Krishnavesha_Registrations").sheet1
 
 @app.route('/', methods=['GET', 'POST'])
